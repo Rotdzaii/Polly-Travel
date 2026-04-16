@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-app-bg: var(--app-bg);
+  --color-app-bg-accent: var(--app-bg-accent);
+  --color-app-card: var(--app-card);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-muted: var(--app-muted);
+  --color-nebula: var(--app-nebula);
+}
+
+@layer base {
+  :root {
+    --app-bg: #f8fafc;
+    --app-bg-accent: #f0f9ff;
+    --app-card: rgba(255, 255, 255, 0.76);
+    --app-border: rgba(15, 23, 42, 0.08);
+    --app-text: #0f172a;
+    --app-muted: #334155;
+    --app-nebula: #8b5cf6;
+  }
+
+  .dark {
+    --app-bg: #020617;
+    --app-bg-accent: #1e1b4b;
+    --app-card: rgba(15, 23, 42, 0.5);
+    --app-border: rgba(255, 255, 255, 0.1);
+    --app-text: #f8fafc;
+    --app-muted: #94a3b8;
+    --app-nebula: #7c3aed;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-app-bg text-app-text antialiased;
+    transition: background-color 0.45s ease, color 0.45s ease;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, #22d3ee 28%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 20px 2px color-mix(in oklch, #22d3ee 45%, transparent);
+  }
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background-color: var(--color-app-card);
+    border: 1px solid var(--color-app-border);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 12%, transparent),
+      0 10px 35px color-mix(in oklch, #020617 16%, transparent);
+    transition: background-color 0.45s ease, border-color 0.45s ease;
+  }
+
+  .nebula-effect {
+    position: absolute;
+    filter: blur(68px);
+    background: var(--color-nebula);
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+    transform: scale(0.8);
+    transition: background-color 0.45s ease, opacity 0.45s ease, filter 0.45s ease, transform 0.45s ease;
+  }
+
+  @media (min-width: 768px) {
+    .nebula-effect {
+      filter: blur(100px);
+      opacity: 0.14;
+      transform: scale(1);
+    }
+  }
+
+  .space-overlay {
+    background-image:
+      radial-gradient(circle at top right, color-mix(in oklch, var(--color-app-bg-accent) 82%, transparent), transparent 54%),
+      radial-gradient(circle at 20% 85%, color-mix(in oklch, var(--color-app-bg-accent) 30%, transparent), transparent 58%);
+    transition: background-image 0.45s ease;
+  }
+
+  .neon-cyan {
+    @apply text-cyan-500 dark:text-cyan-400;
+    text-shadow:
+      0 0 10px color-mix(in oklch, #22d3ee 65%, transparent),
+      0 0 20px color-mix(in oklch, #22d3ee 35%, transparent);
+  }
+
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .float-in {
+    animation: floatIn 500ms ease-out both;
+  }
+}

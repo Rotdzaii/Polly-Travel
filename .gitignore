@@ -1,0 +1,83 @@
+# ------------------------------
+# OS junk files
+# ------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+ehthumbs.db
+
+# ------------------------------
+# IDE / Editor
+# ------------------------------
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.swp
+*.tmp
+
+# ------------------------------
+# Logs
+# ------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------
+# Environment files
+# ------------------------------
+.env
+.env.*
+*.local
+!.env.example
+
+# ------------------------------
+# Node.js / Frontend
+# ------------------------------
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.vite/
+coverage/
+.npm/
+.pnpm-store/
+
+# ------------------------------
+# .NET / C#
+# ------------------------------
+bin/
+obj/
+**/bin/
+**/obj/
+TestResults/
+*.trx
+
+# ------------------------------
+# Databases
+# ------------------------------
+*.db
+*.db-shm
+*.db-wal
+travel-booking-sm.db
+
+# ------------------------------
+# Temporary / local artifacts
+# ------------------------------
+.dist/
+_temp_api_build_output/
+*.cache
+*.pid
+*.seed
+*.out

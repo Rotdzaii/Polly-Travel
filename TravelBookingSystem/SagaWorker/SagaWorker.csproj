@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-SagaWorker-2be80c4a-ec38-42a0-a415-e961c14ba4d6</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TravelBookingSystem.Contracts\TravelBookingSystem.Contracts.csproj" />
+    <ProjectReference Include="..\TravelBookingSystem.Coordinator\TravelBookingSystem.Coordinator.csproj" />
+  </ItemGroup>
+</Project>

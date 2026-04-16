@@ -1,0 +1,6 @@
+@TravelBookingSystem.Services.Mock_HostAddress = http://localhost:5092
+
+GET {{TravelBookingSystem.Services.Mock_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
