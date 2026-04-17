@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Rocket } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { CorrelationIdDisplay } from '../components/CorrelationIdDisplay'
 import { ProgressStepper } from '../components/ProgressStepper'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -16,6 +17,7 @@ const initialStageState = {
 }
 
 export default function BookingStatusPage() {
+  const [searchParams] = useSearchParams()
   const [stageStates, setStageStates] = useState(initialStageState)
   const [logs, setLogs] = useState([])
   const [failedStage, setFailedStage] = useState(null)
@@ -25,6 +27,7 @@ export default function BookingStatusPage() {
   const lastStatusRef = useRef('')
   const failureStageRef = useRef(null)
   const terminalAlertShownRef = useRef(false)
+  const autoTrackedCorrelationIdRef = useRef('')
 
   const addLog = (message) => {
     const now = new Date()
@@ -39,7 +42,7 @@ export default function BookingStatusPage() {
     }
   }
 
-  const applyStatus = (status) => {
+  const applyStatus = (status, reason = '') => {
     const previousStatus = lastStatusRef.current
     const statusChanged = previousStatus !== status
     if (!statusChanged) {
@@ -78,6 +81,9 @@ export default function BookingStatusPage() {
       failureStageRef.current = failedIndex
       const failedStageName = STAGE_NAMES[failedIndex]
       addLog(`[SAGA ALERT] Failure detected at ${failedStageName}. Initiating compensation flow...`)
+      if (reason) {
+        addLog(`[Reason] ${reason}`)
+      }
 
       if (failedIndex === 2) {
         setStageStates({ ...initialStageState, 0: 'success', 1: 'compensating', 2: 'failed' })
@@ -105,6 +111,9 @@ export default function BookingStatusPage() {
       setIsBookingInProgress(false)
       setFailedStage(failedIndex)
       addLog('Compensation completed. Prior successful steps were safely reverted.')
+      if (reason) {
+        addLog(`[Reason] ${reason}`)
+      }
     }
 
     if (status === 'Success') {
@@ -123,9 +132,13 @@ export default function BookingStatusPage() {
       setIsBookingInProgress(false)
       setFailedStage(0)
       addLog('[System] Transaction safely reverted. No partial booking remains.')
+      if (reason) {
+        addLog(`[Reason] ${reason}`)
+      }
       if (!terminalAlertShownRef.current) {
         terminalAlertShownRef.current = true
-        window.alert('Rat tiec, giao dich da bi huy sau qua trinh bu dap de bao toan du lieu.')
+        const cancellationMessage = reason || 'Rat tiec, giao dich da bi huy sau qua trinh bu dap de bao toan du lieu.'
+        window.alert(cancellationMessage)
       }
     }
 
@@ -153,7 +166,7 @@ export default function BookingStatusPage() {
       }
 
       const payload = await response.json()
-      applyStatus(payload.status)
+      applyStatus(payload.status, payload.message || '')
 
       if (payload.status === 'Success' || payload.status === 'Cancelled' || payload.status === 'Failed') {
         stopPolling()
@@ -161,6 +174,27 @@ export default function BookingStatusPage() {
     } catch (error) {
       addLog(`[Error] Polling failed due to connection issue: ${error.message}`)
     }
+  }
+
+  const startTrackingBooking = async (id) => {
+    if (!id) {
+      return
+    }
+
+    stopPolling()
+    lastStatusRef.current = ''
+    failureStageRef.current = null
+    terminalAlertShownRef.current = false
+    setCorrelationId(id)
+    setIsBookingInProgress(true)
+    setStageStates({ ...initialStageState, 0: 'processing' })
+    setFailedStage(null)
+    addLog(`[System] Tracking booking status. CorrelationId: ${id}`)
+
+    await fetchBookingStatus(id)
+    pollingIntervalRef.current = setInterval(() => {
+      fetchBookingStatus(id)
+    }, 2000)
   }
 
   const startBooking = async () => {
@@ -205,13 +239,8 @@ export default function BookingStatusPage() {
 
       const payload = await response.json()
       const id = payload.correlationId
-      setCorrelationId(id)
       addLog(`[System] Booking request accepted. CorrelationId: ${id}`)
-
-      await fetchBookingStatus(id)
-      pollingIntervalRef.current = setInterval(() => {
-        fetchBookingStatus(id)
-      }, 2000)
+      await startTrackingBooking(id)
     } catch (error) {
       addLog(`[Error] Booking request failed due to connection issue: ${error.message}`)
       setIsBookingInProgress(false)
@@ -221,6 +250,16 @@ export default function BookingStatusPage() {
   useEffect(() => {
     return () => stopPolling()
   }, [])
+
+  useEffect(() => {
+    const correlationIdFromQuery = searchParams.get('correlationId') || searchParams.get('bookingId') || ''
+    if (!correlationIdFromQuery || autoTrackedCorrelationIdRef.current === correlationIdFromQuery) {
+      return
+    }
+
+    autoTrackedCorrelationIdRef.current = correlationIdFromQuery
+    void startTrackingBooking(correlationIdFromQuery)
+  }, [searchParams])
 
   const getBookButtonLabel = () => {
     if (isBookingInProgress) {

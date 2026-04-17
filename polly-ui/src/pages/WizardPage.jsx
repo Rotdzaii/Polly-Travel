@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Step1Flight } from '../wizard/components/Step1Flight'
 import { Step2HealthCheck } from '../wizard/components/Step2HealthCheck'
 import { Step3Hotel } from '../wizard/components/Step3Hotel'
 import { Step4Review } from '../wizard/components/Step4Review'
-import { flights, hospitals, hotels } from '../wizard/wizard-data'
+import { fetchWizardMetadata } from '../wizard/wizard-data'
 
-const API_ENDPOINT = 'http://localhost:5143/api/applications'
+const API_BASE_URL = 'http://localhost:5143'
+const API_ENDPOINT = `${API_BASE_URL}/api/applications`
 
 const STEPS = [
   { id: 1, title: 'Flight Selection', description: 'Choose your flight' },
@@ -29,6 +31,13 @@ function calculateNights(checkInDate, checkOutDate) {
 }
 
 export default function WizardPage() {
+  const navigate = useNavigate()
+  const [flights, setFlights] = useState([])
+  const [hospitals, setHospitals] = useState([])
+  const [hotels, setHotels] = useState([])
+  const [isMetadataLoading, setIsMetadataLoading] = useState(true)
+  const [metadataError, setMetadataError] = useState('')
+
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedFlightId, setSelectedFlightId] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
@@ -55,6 +64,61 @@ export default function WizardPage() {
     setCheckInDate(checkIn.toISOString().split('T')[0])
     setCheckOutDate(checkOut.toISOString().split('T')[0])
   }, [])
+
+  useEffect(() => {
+    let isActive = true
+
+    async function loadMetadata() {
+      setIsMetadataLoading(true)
+      setMetadataError('')
+
+      try {
+        const metadata = await fetchWizardMetadata(API_BASE_URL)
+        if (!isActive) {
+          return
+        }
+
+        setFlights(metadata.flights)
+        setHospitals(metadata.hospitals)
+        setHotels(metadata.hotels)
+      } catch (error) {
+        if (!isActive) {
+          return
+        }
+
+        const message = error?.message || 'Khong the tai du lieu metadata tu Backend.'
+        setMetadataError(message)
+      } finally {
+        if (isActive) {
+          setIsMetadataLoading(false)
+        }
+      }
+    }
+
+    loadMetadata()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (selectedFlightId && !flights.some((item) => item.id === selectedFlightId)) {
+      setSelectedFlightId(null)
+    }
+  }, [flights, selectedFlightId])
+
+  useEffect(() => {
+    if (selectedHospitalId && !hospitals.some((item) => item.id === selectedHospitalId)) {
+      setSelectedHospitalId(null)
+    }
+  }, [hospitals, selectedHospitalId])
+
+  useEffect(() => {
+    if (selectedHotelId && !hotels.some((item) => item.id === selectedHotelId)) {
+      setSelectedHotelId(null)
+    }
+  }, [hotels, selectedHotelId])
 
   const canProceed = useMemo(() => {
     switch (currentStep) {
@@ -135,10 +199,28 @@ export default function WizardPage() {
       }
 
       const correlationId = body?.correlationId || body?.bookingId
+      if (correlationId) {
+        navigate(`/status?correlationId=${encodeURIComponent(correlationId)}`)
+        return
+      }
+
       setApplicationRef(correlationId || `APP-${Date.now()}`)
       setShowSuccess(true)
     } catch (error) {
-      setSubmitError(error.message || 'Unable to submit your application.')
+      const message = error?.message || 'Unable to submit your application.'
+      const normalizedMessage = message.toLowerCase()
+      const isBackendConnectionError =
+        normalizedMessage.includes('err_connection_refused')
+        || normalizedMessage.includes('failed to fetch')
+        || normalizedMessage.includes('networkerror')
+
+      if (isBackendConnectionError) {
+        const backendErrorMessage = 'Lỗi kết nối Backend. Vui lòng kiểm tra xem Backend (cổng 5143) đã được chạy chưa!'
+        window.alert(backendErrorMessage)
+        setSubmitError(backendErrorMessage)
+      } else {
+        setSubmitError(message)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -218,6 +300,9 @@ export default function WizardPage() {
               onFlightSelect={setSelectedFlightId}
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
+              flights={flights}
+              isLoading={isMetadataLoading}
+              loadError={metadataError}
             />
           )}
 
@@ -226,6 +311,9 @@ export default function WizardPage() {
               selectedHospitalId={selectedHospitalId}
               onHospitalSelect={setSelectedHospitalId}
               appointmentDate={selectedDate}
+              hospitals={hospitals}
+              isLoading={isMetadataLoading}
+              loadError={metadataError}
             />
           )}
 
@@ -235,11 +323,17 @@ export default function WizardPage() {
               onHotelSelect={setSelectedHotelId}
               checkInDate={checkInDate}
               checkOutDate={checkOutDate}
+              hotels={hotels}
+              isLoading={isMetadataLoading}
+              loadError={metadataError}
             />
           )}
 
           {currentStep === 4 && (
             <Step4Review
+              flights={flights}
+              hospitals={hospitals}
+              hotels={hotels}
               flightId={selectedFlightId}
               hospitalId={selectedHospitalId}
               hotelId={selectedHotelId}

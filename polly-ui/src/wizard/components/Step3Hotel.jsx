@@ -1,5 +1,4 @@
 import { AlertCircle, Calendar, MapPin } from 'lucide-react'
-import { hotels } from '../wizard-data'
 import { HotelCard } from './HotelCard'
 
 function calculateNights(checkInDate, checkOutDate) {
@@ -26,7 +25,15 @@ function formatDate(dateStr) {
   })
 }
 
-export function Step3Hotel({ selectedHotelId, onHotelSelect, checkInDate, checkOutDate }) {
+export function Step3Hotel({
+  selectedHotelId,
+  onHotelSelect,
+  checkInDate,
+  checkOutDate,
+  hotels,
+  isLoading,
+  loadError,
+}) {
   const nights = calculateNights(checkInDate, checkOutDate)
 
   return (
@@ -74,17 +81,38 @@ export function Step3Hotel({ selectedHotelId, onHotelSelect, checkInDate, checkO
 
       <section className="space-y-4">
         <h3 className="font-semibold text-slate-900">Available Hotels</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {hotels.map((hotel) => (
-            <HotelCard
-              key={hotel.id}
-              hotel={hotel}
-              isSelected={selectedHotelId === hotel.id}
-              onSelect={() => onHotelSelect(hotel.id)}
-              nights={nights > 0 ? nights : 1}
-            />
-          ))}
-        </div>
+
+        {isLoading && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            Loading hotel metadata...
+          </div>
+        )}
+
+        {!isLoading && loadError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && hotels.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No hotels available from backend.
+          </div>
+        )}
+
+        {!isLoading && !loadError && hotels.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {hotels.map((hotel) => (
+              <HotelCard
+                key={hotel.id}
+                hotel={hotel}
+                isSelected={selectedHotelId === hotel.id}
+                onSelect={() => onHotelSelect(hotel.id)}
+                nights={nights > 0 ? nights : 1}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

@@ -129,6 +129,7 @@ public sealed class BookingCoordinator(
         {
             CorrelationId = booking.CorrelationId.ToString(),
             Status = booking.Status.ToString(),
+            Message = booking.ErrorMessage,
             LastUpdated = booking.UpdatedAtUtc
         };
     }

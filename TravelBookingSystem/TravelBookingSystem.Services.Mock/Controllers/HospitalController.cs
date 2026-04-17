@@ -13,16 +13,7 @@ public sealed class HospitalController(ILogger<HospitalController> logger) : Con
         logger.LogInformation("[Hospital] Receiving request for CorrelationId: {CorrelationId}", request.CorrelationId);
         await Task.Delay(TimeSpan.FromSeconds(2));
 
-        var failed = Random.Shared.NextDouble() < 0.2;
-        if (failed)
-        {
-            logger.LogWarning("Hospital booking failed for customer {CustomerName}", request.CustomerName);
-            return StatusCode(StatusCodes.Status500InternalServerError, new ServiceActionResponseDto
-            {
-                Succeeded = false,
-                Message = "Hospital booking failed."
-            });
-        }
+        logger.LogInformation("Hospital booking succeeded for customer {CustomerName}", request.CustomerName);
 
         return Ok(new ServiceActionResponseDto
         {

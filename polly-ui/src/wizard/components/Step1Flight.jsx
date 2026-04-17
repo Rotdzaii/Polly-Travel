@@ -1,5 +1,4 @@
 import { AlertCircle, Calendar } from 'lucide-react'
-import { flights } from '../wizard-data'
 import { FlightCard } from './FlightCard'
 
 function getUpcomingDates() {
@@ -24,7 +23,15 @@ function formatDateLabel(dateStr) {
   })
 }
 
-export function Step1Flight({ selectedFlightId, onFlightSelect, selectedDate, onDateChange }) {
+export function Step1Flight({
+  selectedFlightId,
+  onFlightSelect,
+  selectedDate,
+  onDateChange,
+  flights,
+  isLoading,
+  loadError,
+}) {
   const upcomingDates = getUpcomingDates()
 
   return (
@@ -61,22 +68,43 @@ export function Step1Flight({ selectedFlightId, onFlightSelect, selectedDate, on
       <section className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
         <p className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
-          Flights shown here are sample options for the eligibility flow.
+          Flights are loaded from backend metadata endpoint.
         </p>
       </section>
 
       <section className="space-y-4">
         <h3 className="font-semibold text-slate-900">Available Flights</h3>
-        <div className="grid gap-4">
-          {flights.map((flight) => (
-            <FlightCard
-              key={flight.id}
-              flight={flight}
-              isSelected={selectedFlightId === flight.id}
-              onSelect={() => onFlightSelect(flight.id)}
-            />
-          ))}
-        </div>
+
+        {isLoading && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            Loading airline metadata...
+          </div>
+        )}
+
+        {!isLoading && loadError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && flights.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No flights available from backend.
+          </div>
+        )}
+
+        {!isLoading && !loadError && flights.length > 0 && (
+          <div className="grid gap-4">
+            {flights.map((flight) => (
+              <FlightCard
+                key={flight.id}
+                flight={flight}
+                isSelected={selectedFlightId === flight.id}
+                onSelect={() => onFlightSelect(flight.id)}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

@@ -1,4 +1,5 @@
 import { Dumbbell, MapPin, Star, UtensilsCrossed, Wifi } from 'lucide-react'
+import { handleImageError } from './imageFallback'
 
 const amenityIcons = {
   'Free WiFi': <Wifi className="h-4 w-4" />,
@@ -20,7 +21,12 @@ export function HotelCard({ hotel, isSelected, onSelect, nights }) {
       }`}
     >
       <div className="h-36 w-full overflow-hidden">
-        <img src={hotel.image} alt={hotel.name} className="h-full w-full object-cover" />
+        <img
+          src={hotel.imageUrl}
+          alt={hotel.name}
+          onError={handleImageError}
+          className="h-full w-full object-cover"
+        />
       </div>
 
       <div className="space-y-3 p-4 md:p-5">

@@ -1,4 +1,5 @@
 import { Clock, Plane } from 'lucide-react'
+import { handleImageError } from './imageFallback'
 
 export function FlightCard({ flight, isSelected, onSelect }) {
   return (
@@ -13,7 +14,12 @@ export function FlightCard({ flight, isSelected, onSelect }) {
     >
       <div className="flex flex-col md:flex-row">
         <div className="h-40 w-full overflow-hidden md:h-auto md:w-52">
-          <img src={flight.image} alt={flight.airline} className="h-full w-full object-cover" />
+          <img
+            src={flight.imageUrl}
+            alt={flight.airline}
+            onError={handleImageError}
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="flex-1 p-4 md:p-5">
           <div className="mb-4 flex items-center gap-2">

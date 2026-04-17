@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <UseSharedCompilation>false</UseSharedCompilation>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-SagaWorker-2be80c4a-ec38-42a0-a415-e961c14ba4d6</UserSecretsId>

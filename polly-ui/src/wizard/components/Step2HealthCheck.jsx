@@ -1,5 +1,4 @@
 import { AlertCircle, Calendar } from 'lucide-react'
-import { hospitals } from '../wizard-data'
 import { HospitalCard } from './HospitalCard'
 
 function formatDateDisplay(dateStr) {
@@ -15,7 +14,14 @@ function formatDateDisplay(dateStr) {
   })
 }
 
-export function Step2HealthCheck({ selectedHospitalId, onHospitalSelect, appointmentDate }) {
+export function Step2HealthCheck({
+  selectedHospitalId,
+  onHospitalSelect,
+  appointmentDate,
+  hospitals,
+  isLoading,
+  loadError,
+}) {
   return (
     <div className="space-y-6">
       <div>
@@ -42,16 +48,37 @@ export function Step2HealthCheck({ selectedHospitalId, onHospitalSelect, appoint
 
       <section className="space-y-4">
         <h3 className="font-semibold text-slate-900">Select Hospital</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {hospitals.map((hospital) => (
-            <HospitalCard
-              key={hospital.id}
-              hospital={hospital}
-              isSelected={selectedHospitalId === hospital.id}
-              onSelect={() => onHospitalSelect(hospital.id)}
-            />
-          ))}
-        </div>
+
+        {isLoading && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            Loading hospital metadata...
+          </div>
+        )}
+
+        {!isLoading && loadError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && hospitals.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No hospitals available from backend.
+          </div>
+        )}
+
+        {!isLoading && !loadError && hospitals.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {hospitals.map((hospital) => (
+              <HospitalCard
+                key={hospital.id}
+                hospital={hospital}
+                isSelected={selectedHospitalId === hospital.id}
+                onSelect={() => onHospitalSelect(hospital.id)}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

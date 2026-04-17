@@ -1,4 +1,5 @@
 import { Clock, MapPin, Star, User } from 'lucide-react'
+import { handleImageError } from './imageFallback'
 
 export function HospitalCard({ hospital, isSelected, onSelect }) {
   return (
@@ -12,7 +13,12 @@ export function HospitalCard({ hospital, isSelected, onSelect }) {
       }`}
     >
       <div className="h-36 w-full overflow-hidden">
-        <img src={hospital.image} alt={hospital.name} className="h-full w-full object-cover" />
+        <img
+          src={hospital.imageUrl}
+          alt={hospital.name}
+          onError={handleImageError}
+          className="h-full w-full object-cover"
+        />
       </div>
 
       <div className="space-y-3 p-4 md:p-5">

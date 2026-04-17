@@ -13,16 +13,7 @@ public sealed class HotelController(ILogger<HotelController> logger) : Controlle
         logger.LogInformation("Hotel Receiving request for CorrelationId: {CorrelationId}", request.CorrelationId);
         await Task.Delay(TimeSpan.FromSeconds(2));
 
-        var failed = Random.Shared.NextDouble() < 0.2;
-        if (failed)
-        {
-            logger.LogWarning("Hotel booking failed for customer {CustomerName}", request.CustomerName);
-            return StatusCode(StatusCodes.Status500InternalServerError, new ServiceActionResponseDto
-            {
-                Succeeded = false,
-                Message = "Hotel booking failed."
-            });
-        }
+        logger.LogInformation("Hotel booking succeeded for customer {CustomerName}", request.CustomerName);
 
         return Ok(new ServiceActionResponseDto
         {

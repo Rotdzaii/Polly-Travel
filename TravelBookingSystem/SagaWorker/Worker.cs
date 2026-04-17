@@ -16,6 +16,8 @@ public sealed class Worker(
     IServiceScopeFactory scopeFactory,
     ILogger<Worker> logger) : BackgroundService
 {
+    private const string WeatherCancellationReason = "Hủy do thời tiết xấu. Hệ thống đã tự động hoàn tác booking.";
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await consumer.StartConsumingAsync(HandleEnvelopeAsync, stoppingToken);
@@ -115,6 +117,12 @@ public sealed class Worker(
     {
         logger.LogInformation("SagaStarted BookingId={BookingId} Step={Step} Status={Status}", message.BookingId, nameof(BookingRequestedMessage), BookingStatus.Initial);
         var record = await GetOrCreateRecordAsync(dbContext, message.BookingId);
+        if (!string.IsNullOrWhiteSpace(record.ErrorMessage))
+        {
+            record.ErrorMessage = null;
+            await dbContext.SaveChangesAsync();
+        }
+
         await TransitionStateAsync(dbContext, record, BookingStatus.Initial);
 
         await publisher.PublishAsync(new BookHospitalCommand
@@ -133,6 +141,8 @@ public sealed class Worker(
         var booked = await medicalProxy.BookAsync(request.Medical);
         if (!booked)
         {
+            record.ErrorMessage = "Medical booking failed.";
+            await dbContext.SaveChangesAsync();
             await TransitionStateAsync(dbContext, record, BookingStatus.Failed);
             logger.LogInformation("SagaFailed BookingId={BookingId} Step={Step} Status={Status}", message.BookingId, nameof(BookHospitalCommand), BookingStatus.Failed);
 
@@ -166,6 +176,8 @@ public sealed class Worker(
         var booked = await hotelProxy.BookAsync(request.Hotel);
         if (!booked)
         {
+            record.ErrorMessage = "Hotel booking failed.";
+            await dbContext.SaveChangesAsync();
             await TransitionStateAsync(dbContext, record, BookingStatus.Compensating);
             logger.LogInformation("SagaCompensationStarted BookingId={BookingId} Step={Step} Status={Status}", message.BookingId, nameof(BookHotelCommand), BookingStatus.Compensating);
 
@@ -199,6 +211,8 @@ public sealed class Worker(
         var booked = await flightProxy.BookAsync(request.Flight);
         if (!booked)
         {
+            record.ErrorMessage = WeatherCancellationReason;
+            await dbContext.SaveChangesAsync();
             await TransitionStateAsync(dbContext, record, BookingStatus.Compensating);
             logger.LogInformation("SagaCompensationStarted BookingId={BookingId} Step={Step} Status={Status}", message.BookingId, nameof(BookFlightCommand), BookingStatus.Compensating);
 
@@ -259,6 +273,12 @@ public sealed class Worker(
         }
 
         await TransitionStateAsync(dbContext, record, BookingStatus.Cancelled);
+        if (string.IsNullOrWhiteSpace(record.ErrorMessage))
+        {
+            record.ErrorMessage = "Booking cancelled by compensation flow.";
+            await dbContext.SaveChangesAsync();
+        }
+
         logger.LogInformation("SagaFailed BookingId={BookingId} Step={Step} Status={Status}", message.BookingId, nameof(CancelHospitalCommand), BookingStatus.Cancelled);
 
         await publisher.PublishAsync(new BookingFailedEvent

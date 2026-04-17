@@ -1,5 +1,4 @@
 import { CheckCircle, DollarSign, Hotel, Plane, Stethoscope } from 'lucide-react'
-import { flights, hospitals, hotels } from '../wizard-data'
 
 function calculateNights(checkInDate, checkOutDate) {
   if (!checkInDate || !checkOutDate) {
@@ -26,6 +25,9 @@ function formatDate(dateStr) {
 }
 
 export function Step4Review({
+  flights,
+  hospitals,
+  hotels,
   flightId,
   hospitalId,
   hotelId,
